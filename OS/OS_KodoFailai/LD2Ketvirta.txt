@@ -1,0 +1,28 @@
+#!/bin/bash
+
+function process_directory() {
+  local dir="$1"
+  local index_file="$dir/index.txt"
+  local tmp_file=$(mktemp)
+
+  if [ ! -f "$index_file" ]; then
+    touch "$index_file"
+  fi
+
+  for entry in "$dir"/*; do
+    if [ -d "$entry" ]; then
+      process_directory "$entry"
+    elif [ -f "$entry" ] && [ "$entry" != "$index_file" ]; then
+      if ! grep -q "^$(basename "$entry")/" "$index_file"; then
+        read -p "Įveskite aprašymą failui $entry: " description
+        echo "$(basename "$entry")/$description" >> "$index_file"
+      fi
+      echo "$(grep "^$(basename "$entry")/" "$index_file")" >> "$tmp_file"
+    fi
+  done
+
+  # Pašalinkite perteklinius failų aprašymus
+  mv "$tmp_file" "$index_file"
+}
+
+process_directory "."

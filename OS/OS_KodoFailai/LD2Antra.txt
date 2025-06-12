@@ -1,0 +1,18 @@
+1.
+#!/bin/sh
+echo "Ivesk savo varda: "
+read v
+echo "Grupe: "
+read g
+echo "Vartotojo numeri: "
+read n
+echo $v, $g, $n
+
+2.
+#!/bin/sh
+echo "Elementu kiekis: " $#
+echo "Visi elementai: " $*
+
+3.
+
+

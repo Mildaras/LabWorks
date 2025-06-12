@@ -1,0 +1,71 @@
+grep:
+iš failo /data/ld/ld2/stud2001 išrinkit eilutes, kurių gale yra skaičius 7 (grep "7$" /data/ld/ld2/stud2001)
+iš failo /data/ld/ld2/stud2001 išrinkit eilutes, kurių pradžioje yra skaičius 2 (grep "^2" /data/ld/ld2/stud2001)
+iš failo stud2001 išrinkit eilutes, kurių gale yra raidė n arba d arba raidės nuo r iki v. (grep "d$\|n$\|[r-v]$" stud2001)
+iš failo stud2001 išrinkit eilutes, kuriose yra įrašas apie studentus, kurių vardai sutampa su Jūsų vardu. (grep "Mildaras" stud2001)
+iš failo stud2001 išrinkit eilutes, kuriose nėra IF 9/1 grupės studentų. (grep -v "IF 9/1" stud2001)
+užrašykite filtrą, kuris ieškotų eilučių, kuriose nėra jokio skaičiaus. (grep -vE '[0-9]' stud2001)
+užrašykite filtrą, kuris ieškotų eilutėse bet kokios raidės(tiek didžiosios, tiek mažosios). (grep -E '[A-Za-z]' stud2001)
+užrašykite filtrą, kuris iš failo stud2001 išrinktų eilutes, kuriose po A raidės seka raidė n arba raidė u, o po jų seka raidės d ir r. (grep -E 'A[nu]dr' stud2001)
+užrašykite filtrą, kuris iš failo stud2001 išrinktų eilutes, kuriose po A raidės seka raidė n arba raidė u, o po jų seka raidės d ir r, o po raidės r nėra raidės e. (grep -E 'A[nu]dr[^e]' stud2001)
+užrašykite filtrą, kuris faile stud2001 ieškotų eilučių su įrašais apie 9/1 arba 9/2 grupių studentus. (grep -E 'IF 9/[12]' stud2001)
+užrašykite filtrą, kuris ieškotų eilučių besibaigiančių seka andr arba mari. (grep -E 'andr$\|mari$' stud2001)
+Ką reiškia išplėstos reguliarios išraiškos: a(i)+b, a(i)*b, a(i)?b. Duomenų pavyzdys: source:shell|duom (Išplėstos reguliarios išraiškos yra specialios teksto paieškos sintaksės, kurios leidžia atlikti tikslesnes ir sudėtingesnes teksto paieškas.)
+
+awk:
+Sudarykite programą awk11, kuri iš failo /data/ld/ld2/stud2001, atrinktų studentus, kurių vardai sutampa su Jūsų vardu ir atspausdintų eilutės numerius kuriose jie rasti, jų pavardes bei vardus.
+(awk -F : '{if ($4 == "Mildaras") {print NR, $4, $5}}' /data/ld/ld2/stud2001 | tail -1)
+
+Sudarykite programą awk12, kuri iš failo stud2001 išrinktų tas eilutes, kuriose yra IF 9/2 grupės studentai ir gale atspausdintų, kiek eilučių rasta.
+(awk '$2 == "IF 9/2" {print $0; count++} END {print "Number of lines found: " count}' stud2001)
+
+Sudarykite programą awk13, kuri iš failo /data/ld/ld2/awk/preke išrinktų tas eilutes, kuriose yra informacija apie tas prekes, kurios visos yra parduotos.
+(awk -F : '$1 ~ $2' /data/ld/ld2/awk/preke)
+
+Sudarykite programą awk14, kuri iš failo /data/ld/ld2/awk/preke išrinktų maksimalias stulpelių reikšmes bei gale jas atspausdintų.
+(
+'BEGIN {max_kaina = max_gauta = max_parduota = 0}
+{if ($1 > max_kaina) max_kaina = $1;
+if ($2 > max_gauta) max_gauta = $2;
+if ($3 > max_parduota) max_parduota = $3}
+END {print "Max kaina: " max_kaina;
+print "Max gauta: " max_gauta;
+print "Max parduota: " max_parduota}' /data/ld/ld2/awk/preke
+)
+
+Sudarykite programą awk15, kuri iš šio failo suskaičiuotų, kiek paketų ir kiek baitų yra iškeliavę į Internetą.
+(
+#!/bin/sh
+BEGIN {ip =" 62. 40.103.217";  Baitu_suma = Paketu_suma = 0;FS=":";}
+{
+ if($3 == ip)
+  {
+   for(i=1;i<=NF;i++) Baitu_suma += $6; Paketu_suma += $5;
+  }
+}
+END { print "\nProgramos darbo pabaiga", "Baitu skaicius: ", Baitu_suma, "Paketu skaiciu: ", Paketu_suma;}
+)
+
+Sudarykite awk filtrą, kuris kaip duomenis imtų ls -l rezultatus ir suskaičiuotų/atspausdintų bendrą katalogo failų dydį (užtenka vertint ls išvedamą dydį, t.y. kietų nuorodų, failų tipų ir kt. vertint nereikia)
+(
+ls -l | awk '{sum += $5} END {print "Total size: " sum}'
+)
+
+Bendros užduotys:
+awk '{count[$4]++} END{for (i in count) {print i, count[i]}}' /data/ld/ld2/stud2001 | sort -k2,2nr
+
+awk '{print $1}' /data/ld/ld1/Solaris_access_log | sort | uniq -c | sort -nr | head -10
+
+awk '{arr[$1]+=$10} END {for (ip in arr) print arr[ip], ip}' /data/ld/ld1/Solaris_access_log | sort -nr | head -10
+
+awk -F\" '($2 ~ /^GET/) {print $2}' /data/ld/ld1/Solaris_access_log | cut -d' ' -f2 | sort | uniq -c | sort -nr | head -10
+
+awk '($9 == 404) {print $1}' /data/ld/ld1/Solaris_access_log | sort | uniq -c | sort -nr
+
+awk -F\" '($9 == 404) {print $1, $2}' /data/ld/ld1/Solaris_access_log | sort | uniq -c | sort -nr | head -10
+
+...
+
+...
+
+

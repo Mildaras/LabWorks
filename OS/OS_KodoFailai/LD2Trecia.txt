@@ -1,0 +1,235 @@
+1.
+#!/bin/sh
+
+# Check if the number of arguments is not equal to 2
+if [ $# -ne 2 ]; then
+  echo "Error: Please provide exactly two arguments."
+  exit 2
+fi
+
+file1="$1"
+file2="$2"
+
+# Check if both files exist
+if [ ! -e "$file1" ] || [ ! -e "$file2" ]; then
+  echo "Error: One or both files do not exist."
+  exit 1
+fi
+
+# Get the file owners
+owner1=$(stat -c '%U' "$file1")
+owner2=$(stat -c '%U' "$file2")
+
+# Check if the file owners are the same
+if [ "$owner1" == "$owner2" ]; then
+  echo "The file owners are the same: $owner1"
+  exit 0
+else
+  echo "The file owners are different: $owner1 and $owner2"
+  exit 1
+fi
+
+
+2.
+#!/bin/bash
+
+if [ $# -eq 0 ]; then
+  echo "Klaida: nėra argumentų."
+  exit 1
+else
+  echo "Argumentų skaičius: $#"
+  echo "Argumentų sąrašas: $@"
+fi
+
+
+#!/bin/bash
+
+if [ $# -eq 0 ]; then
+  echo "Klaida: nėra argumentų."
+  exit 1
+elif [ $# -eq 1 ] && [ -d "$1" ]; then
+  echo "Katalogo \"$1\" turinys:"
+  ls -1 "$1"
+else
+  echo "Argumentų skaičius: $#"
+  echo "Argumentų sąrašas: $@"
+fi
+
+
+#!/bin/bash
+
+if [ $# -eq 0 ]; then
+  echo "Klaida: nėra argumentų."
+  exit 1
+elif [ $# -eq 1 ]; then
+  if [ -d "$1" ]; then
+    echo "Katalogo \"$1\" turinys:"
+    ls -1 "$1"
+  elif [ -f "$1" ] && [ -r "$1" ]; then
+    read -p "Ar rodyti failo \"$1\" turinį? (T/N) " answer
+    if [ "$answer" == "T" ] || [ "$answer" == "t" ]; then
+      cat "$1"
+    fi
+  else
+    echo "Argumentų skaičius: $#"
+    echo "Argumentų sąrašas: $@"
+  fi
+fi
+
+
+#!/bin/bash
+
+if [ $# -ne 2 ]; then
+  echo "Klaida: privalote nurodyti du argumentus."
+  exit 1
+fi
+
+dir="$1"
+file="$2"
+
+if [ -d "$dir" ] && [ -f "$file" ]; then
+  mv "$file" "$dir" 2>/dev/null
+  if [ $? -ne 0 ]; then
+    cp "$file" "$dir"
+    if [ $? -eq 0 ]; then
+      echo "Failas \"$file\" nukopijuotas į katalogą \"$dir\"."
+    else
+      echo "Klaida: nepavyko perkelti arba nukopijuoti failo."
+      exit 1
+    fi
+ else
+echo "Failas "$file" perkeliamas į katalogą "$dir"."
+fi
+else
+if [ ! -d "$dir" ]; then
+echo "Klaida: pirmasis argumentas nėra katalogas."
+fi
+if [ ! -f "$file" ]; then
+echo "Klaida: antrasis argumentas nėra failas."
+fi
+exit 1
+fi
+
+
+5.
+
+#!/bin/bash
+
+declare -A days_lt_to_en=(
+  ["1"]="Monday" ["2"]="Tuesday" ["3"]="Wednesday" ["4"]="Thursday" ["5"]="Friday" ["6"]="Saturday" ["7"]="Sunday"
+  ["pirmadienis"]="Monday" ["antradienis"]="Tuesday" ["trečiadienis"]="Wednesday" ["ketvirtadienis"]="Thursday"
+  ["penktadienis"]="Friday" ["šeštadienis"]="Saturday" ["sekmadienis"]="Sunday"
+)
+
+while true; do
+  read -p "Įveskite skaičių arba lietuvišką savaitės dienos pavadinimą (Q arba q baigti): " input
+  if [ "$input" == "Q" ] || [ "$input" == "q" ]; then
+    exit 0
+  elif [ -n "${days_lt_to_en[$input]}" ]; then
+    echo "Angliškas savaitės dienos pavadinimas: ${days_lt_to_en[$input]}"
+  else
+    echo "Klaida: neteisingas įvesties formatas."
+  fi
+done
+
+
+6.
+#!/bin/bash
+
+counter=1
+for arg in "$@"; do
+  echo "$counter: $arg"
+  counter=$((counter + 1))
+done
+
+
+#!/bin/bash
+
+for entry in *; do
+  if [ -f "$entry" ]; then
+    file "$entry"
+  fi
+done
+
+
+#!/bin/bash
+
+read -p "Įveskite skaičių eilutę (skaičiai atskirti tarpais): " input
+numbers=($input)
+first_number="${numbers[0]}"
+
+smaller=()
+larger_or_equal=()
+
+for num in "${numbers[@]}"; do
+  if [ "$num" -lt "$first_number" ]; then
+    smaller+=("$num")
+  elif [ "$num" -ge "$first_number" ]; then
+    larger_or_equal+=("$num")
+  fi
+done
+
+echo "Skaičiai mažesni už pirmąjį: ${smaller[*]}"
+echo "Skaičiai didesni arba lygūs pirmąjam: ${larger_or_equal[*]}"
+
+
+#!/bin/bash
+
+for file in "$@"; do
+  if [ -f "$file" ]; then
+    readable="neskaitomas"
+    executable="nevykdomas"
+    if [ -r "$file" ]; then
+      readable="skaitomas"
+    fi
+    if [ -x "$file" ]; then
+      executable="vykdomas"
+    fi
+    echo "$file >> $readable/$executable"
+  else
+    echo "Klaida: \"$file\" nėra failas."
+  fi
+done
+
+
+#!/bin/bash
+
+while [ "$#" -gt 0 ]; do
+  echo "$1"
+  shift
+done
+
+
+#!/bin/bash
+
+if [ "$#" -ne 1 ]; then
+  echo "Klaida: privalote nurodyti vieną argumentą."
+  exit 1
+fi
+
+for i in $(seq 0 "$1"); do
+  echo "$i"
+done
+
+
+#!/bin/bash
+
+if [ "$#" -eq 0 ]; then
+echo "Klaida: privalote nurodyti bent vieną naudotoją kaip argumentą."
+exit 1
+fi
+
+while true; do
+for user in "$@"; do
+if who | grep -q "^$user"; then
+echo "Naudotojas $user yra prisijungęs."
+exit 0
+fi
+done
+sleep 60
+done
+
+
+
+
+
