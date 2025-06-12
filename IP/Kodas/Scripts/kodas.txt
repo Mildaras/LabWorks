@@ -1,0 +1,344 @@
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.*;
+
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.util.ArrayUtil;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import javax.swing.*;
+
+public class Main {
+    
+    public static void main(String[] args) {
+        List<Place> places = ReadFromXLSX("./IP_data_2023.xlsx"); //size() = 314
+        
+        Collections.shuffle(places, new Random(1));
+        
+        int n = 12;
+        List<Place> placesSubList = places.subList(0, n);
+        
+        List<Place> startingPlaces = new ArrayList<>();
+        startingPlaces.add(placesSubList.get(0));
+        startingPlaces.add(placesSubList.get(1));
+        startingPlaces.add(placesSubList.get(2));
+    
+        long start, end;
+        
+        //Greedy algorithm testing
+        //List<List<Place>> travelersPaths = GreedyMTSP(startingPlaces, placesSubList);
+        //printTravelersPaths(travelersPaths);
+        
+        //Optimal algorithm testing
+        List<List<Place>> travelersPaths = new ArrayList<>();
+        start = System.currentTimeMillis();
+        travelersPaths = OptimalMTSP(startingPlaces, placesSubList);
+        end = System.currentTimeMillis();
+    
+        for ( var path : travelersPaths ){
+            System.out.println(getPathPrice(path));
+        }
+        
+        System.out.printf("%-20d %-20f\n", n, (double) (end - start) / 1000);
+        
+//        int[] permutation = new int[placesSubList.size()];
+//        Arrays.fill(permutation, -1);
+//        //recursivePermutations(placesSubList,0, permutation);
+//        List<int[]> permutations_travelers = new ArrayList<>();
+//        recursiveCombinations(3, 0, permutation, permutations_travelers);
+//
+//
+//        long start, end;
+//
+//        int n = 1;
+//        while (n <= 10) {
+//            permutation = new int[n];
+//            Arrays.fill(permutation, -1);
+//
+//            start = System.currentTimeMillis();
+//            List<int[]> permutations = new ArrayList<>();
+//            recursivePermutations(n, 0, permutation, permutations);
+//            end = System.currentTimeMillis();
+//
+//            System.out.printf("%-20d %-20f\n", n, (double) (end - start) / 1000);
+//            n++;
+//        }
+    
+        DisplayGraphics(travelersPaths);
+    }
+    
+    public static List<List<Place>> OptimalMTSP(List<Place> startingPlaces, List<Place> places)
+    {
+        //Initiliazing array with starting positions
+        List<List<Place>> travelingPaths = new ArrayList<>();
+        for (var startingPlace : startingPlaces)
+        {
+            List<Place> travelingPath = new ArrayList<>();
+            travelingPath.add(startingPlace);
+            travelingPaths.add(travelingPath);
+            places.remove(startingPlace);
+        }
+        
+        //Generating all possible permutations of places
+        List<int[]> permutations_places = new ArrayList<>();
+        int[] permutation = new int[places.size()];
+        Arrays.fill(permutation, -1);
+        recursivePermutations(places.size(), 0, permutation, permutations_places);
+        
+        //Generating all possible travelers traversing paths
+        List<int[]> combinations_travelers = new ArrayList<>();
+        recursiveCombinations(startingPlaces.size(), 0, new int[places.size()], combinations_travelers);
+    
+        List<List<Place>> cheapestTravelingPaths = new ArrayList<>();
+        double minPrice = Double.MAX_VALUE;
+        for ( var travelCombination : combinations_travelers)
+        {
+            for ( var placesPermutation : permutations_places)
+            {
+                //Creating a place to store the new generated paths
+                List<List<Place>> newTravelingPaths = new ArrayList<>();
+                for (List<Place> travelingPath : travelingPaths) {
+                    List<Place> travelersPath = new ArrayList<>();
+                    travelersPath.add(travelingPath.get(0));
+                    newTravelingPaths.add(travelersPath);
+                }
+                
+                //Path building
+                for (int i = 0; i < places.size(); i++)
+                    newTravelingPaths.get(travelCombination[i]).add(places.get(placesPermutation[i]));
+    
+                //Returning each traveler to starting position
+                for (var travelersPath : newTravelingPaths)
+                    travelersPath.add(travelersPath.get(0));
+                
+                //Calculating path price
+                double currentPrice = 0;
+                for (List<Place> travelingPath : newTravelingPaths)
+                    currentPrice += getPathPrice(travelingPath);
+                
+                if( currentPrice < minPrice )
+                {
+                    minPrice = currentPrice;
+                    cheapestTravelingPaths = new ArrayList<>(newTravelingPaths);
+                }
+            }
+        }
+        
+        return cheapestTravelingPaths;
+    }
+    
+    //O(n)
+    public static boolean contains(int[] permutation, int value)
+    {
+        if(permutation != null) {
+            for (int perm : permutation) {
+                if (perm == value){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+    public static void recursiveCombinations(int n, int currentIndex, int[] combination, List<int[]> combinations)
+    {
+        if(currentIndex < n)
+        {
+            for (int i = 0; i < n; i++)
+            {
+                combination[currentIndex] = i;
+                recursiveCombinations(n, currentIndex + 1,  combination, combinations);
+            }
+        }
+        else
+        {
+            combinations.add(Arrays.copyOf(combination, combination.length));
+        }
+    }
+    
+    public static void recursivePermutations(int n, int currentIndex, int[] permutation, List<int[]> permutations)
+    {
+        if(currentIndex < n)
+        {
+            for (int i = 0; i < n; i++)
+            {
+                if(!contains(permutation, i))
+                {
+                    permutation[currentIndex] = i;
+                    recursivePermutations(n, currentIndex + 1,  permutation, permutations);
+                    permutation[currentIndex] = -1;
+                }
+            }
+        }
+        else
+        {
+            permutations.add(Arrays.copyOf(permutation, permutation.length));
+        }
+    }
+    
+    public static void printPermutation(int[] permutation){
+        for ( int value : permutation )
+            System.out.print(value);
+        System.out.println(" " + permutation.length);
+    }
+    
+//-----------------------------------------------------------------------------------------------------
+    
+    public static void printTravelersPaths(List<List<Place>> travelersPaths)
+    {
+        for (int i = 0; i < travelersPaths.size(); i++)
+        {
+            System.out.printf("-------- %d --------\n", i);
+            for (var place : travelersPaths.get(i))
+            {
+                System.out.println(place);
+            }
+            System.out.print("Total price: ");
+            System.out.print("\u001B[32m" + getPathPrice(travelersPaths.get(i)) + "\u001B[0m\n");
+        }
+    }
+    
+    //O(path.length)
+    public static double getPathPrice(List<Place> path)
+    {
+        double totalPrice = 0;
+        for (int i = 0; i < path.size() - 1; i++)
+        {
+            totalPrice += getPrice(path.get(i), path.get(i + 1));
+        }
+        return totalPrice;
+    }
+    
+    //O(1)
+    private static double getDistance(Place place1, Place place2)
+    {
+        return Math.sqrt( Math.pow((place1.X - place2.X), 2) +
+                Math.pow((place1.Y - place2.Y), 2) );
+    }
+    
+    //O(1)
+    private static double getPrice(Place place1, Place place2)
+    {
+        return Math.sqrt(getDistance(place1, place2));
+    }
+    
+//-----------------------------------------------------------------------------------------------------
+    
+    public static List<List<Place>> GreedyMTSP(List<Place> startingPlaces, List<Place> places)
+    {
+        List<List<Place>> travelersPaths = new ArrayList<>();
+        
+        //Initiliazing array with starting positions
+        for (var startingPlace : startingPlaces)
+        {
+            List<Place> travelersPath = new ArrayList<>();
+            travelersPath.add(startingPlace);
+            travelersPaths.add(travelersPath);
+            places.remove(startingPlace);
+        }
+        
+        while (places.size() > 0)
+        {
+            for (List<Place> path : travelersPaths)
+            {
+                if (places.size() > 0)
+                {
+                    Place cheapestPlaceMove = getGreedyPlace(path.get(path.size() - 1), places);
+                    path.add(cheapestPlaceMove);
+                    places.remove(cheapestPlaceMove);
+                }
+            }
+        }
+        
+        //Returning each traveler to starting position
+        for (var travelersPath : travelersPaths)
+        {
+            travelersPath.add(travelersPath.get(0));
+        }
+        
+        return travelersPaths;
+    }
+    
+    //O(places.length)
+    public static Place getGreedyPlace(Place startingPlace, List<Place> places)
+    {
+        double cheapestMove = Double.MAX_VALUE;
+        Place chepeastMovePlace = null;
+        for( var place : places )
+        {
+            if( place != startingPlace)
+            {
+                double currentPrice = getPrice(startingPlace, place);
+                if (currentPrice < cheapestMove)
+                {
+                    cheapestMove = currentPrice;
+                    chepeastMovePlace = place;
+                }
+            }
+        }
+        return chepeastMovePlace;
+    }
+    
+//-----------------------------------------------------------------------------------------------------
+    
+    public static void DisplayGraphics(List<List<Place>> travelers)
+    {
+        int width = 1920;
+        int height = 1000;
+        JFrame frame = new JFrame();
+        DrawingGraphics dg = new DrawingGraphics(width, height, travelers);
+        frame.setSize(width, height);
+        frame.setTitle("Places");
+        frame.add(dg);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+    }
+    
+    public static void getMaxMinDiff(List<Place> places)
+    {
+        double max_X = 0;
+        double max_Y = 0;
+        double min_X = Double.MAX_VALUE;
+        double min_Y = Double.MAX_VALUE;
+        for (var place : places)
+        {
+            if(place.X > max_X) max_X = place.X;
+            if(place.Y > max_Y) max_Y = place.Y;
+            if(place.X < min_X) min_X = place.X;
+            if(place.Y < min_Y) min_Y = place.Y;
+        }
+        System.out.println("MAX  X " + max_X + " Y " + max_Y);
+        System.out.println("MIN  X " + min_X + " Y " + min_Y);
+        System.out.println("DIFF X " + (max_X - min_X) + " Y " + (max_Y - min_Y));
+    }
+    
+    public static List<Place> ReadFromXLSX(String filePath)
+    {
+        List<Place> places = new ArrayList<>();
+        
+        try
+        {
+            File file = new File(filePath);
+            FileInputStream fis = new FileInputStream(file);
+            XSSFWorkbook workbook = new XSSFWorkbook(fis);
+            XSSFSheet sheet = workbook.getSheetAt(0);
+            for (Row row : sheet)
+            {
+                String name = row.getCell(0).getStringCellValue();
+                double id = row.getCell(1).getNumericCellValue();
+                double x = row.getCell(2).getNumericCellValue();
+                double y = row.getCell(3).getNumericCellValue();
+                
+                Place place = new Place(name, id, x, y);
+                places.add(place);
+            }
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+        
+        return places;
+    }
+}
